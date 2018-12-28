@@ -52,6 +52,15 @@ function getPosFromGridCell(cell)
   }
 end
 
+function getNearestCellFromPos(position)
+  return {
+    x = math.floor((math.floor(board.width/2) + math.floor(position.x))/ cell_size.x) + 1,
+    y = position.y,
+    z = math.floor((math.floor(board.height/2) - math.floor(position.z)) / cell_size.z)
+  }
+
+end
+
 function insertObjAfterDelay(obj, cell, time)
   Wait.time(function()
     insertObjOnGRID(obj, cell)
@@ -77,6 +86,11 @@ end
 --     picked_up_object.drop()
 --   end
 -- end
+
+function onObjectDrop(color, obj)
+  insertObjOnGRID(obj, getNearestCellFromPos(obj.getPosition()))
+  obj.setVelocity({0,0,0})
+end
 
 
 
