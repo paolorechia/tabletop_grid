@@ -1,0 +1,144 @@
+--[[ Lua code. See documentation: https://api.tabletopsimulator.com/ --]]
+
+--[[ The onLoad event is called after the game save finishes loading. --]]
+button_parameters = {}
+button_parameters.click_function = 'buttonClicked'
+button_parameters.function_owner = nil
+button_parameters.label = 'Press me'
+button_parameters.position = {0,0,8,0}
+button_parameters.rotation = {0,0,0}
+button_parameters.width = 500
+button_parameters.height = 500
+button_parameters.font_size = 100
+
+
+-- Default objects
+rock_left_top_GUID = '5384a8'
+rock_right_top_GUID = '151813'
+rock_left_bottom_GUID = 'cfa77b'
+rock_right_bottom_GUID = 'ff792c'
+dwarf_GUID = '46c80d'
+
+function buttonClicked()
+    print('Learning is fun. Sortf. ')
+
+end
+
+owners = {}
+
+-- GRID part
+GRID = {}
+board = { width = 0, height = 0 }
+cell_size = {x = 3, z = 3}
+GRID_NUM_CELLS = { x = 0, z = 0 }
+
+function insertTileOnGRID(obj, cell)
+  obj.setLock(true)
+  GRID[obj.getGUID()] = { x = cell.x, z = cell.z }
+  obj.setPosition(getPosFromGridCell(cell))
+end
+
+function insertObjOnGRID(obj, cell)
+  GRID[obj.getGUID()] = { x = cell.x, z = cell.z }
+  obj.setPosition(getPosFromGridCell(cell))
+end
+
+
+function getPosFromGridCell(cell)
+  return {
+    x = -board.width/2 + cell.x * cell_size.x,
+    y = cell.y,
+    z = board.height/2 - cell.z * cell_size.z
+  }
+end
+
+function insertObjAfterDelay(obj, cell, time)
+  Wait.time(function()
+    insertObjOnGRID(obj, cell)
+  end,
+  time)
+end
+
+function getObjFromGRID(obj)
+
+end
+
+function printPos(position)
+  print("x:", position.x, "; z:", position.z)
+end
+
+function setOwner(obj, color)
+  owners[obj.getGUID()] = color
+end
+-- function onObjectPickUp(player_color, picked_up_object)
+--   print (owners[picked_up_object.GUID])
+--   print (player_color)
+--   if (owners[picked_up_object.GUID] ~= player_color) then
+--     picked_up_object.drop()
+--   end
+-- end
+
+
+
+function onLoad()
+    print('onLoad!')
+    rock_left_upper = getObjectFromGUID(rock_left_top_GUID)
+    rock_right_upper = getObjectFromGUID(rock_right_top_GUID)
+    rock_right_bottom = getObjectFromGUID(rock_right_bottom_GUID)
+    rock_left_bottom = getObjectFromGUID(rock_left_bottom_GUID)
+    dwarf_obj = getObjectFromGUID(dwarf_GUID)
+    dwarf_obj.setPosition({2, 10, 2})
+    dwarf_obj.createButton(button_parameters)
+    dwarf_obj.setScale({1, 1, 1})
+    dwarf_obj.setName('Dwarf!!')
+    setOwner(dwarf_obj, 'White')
+
+    printPos(rock_left_upper.getPosition())
+    printPos(rock_right_upper.getPosition())
+    printPos(rock_right_bottom.getPosition())
+    printPos(rock_left_bottom.getPosition())
+    board.width = math.abs(rock_left_upper.getPosition().x - rock_right_upper.getPosition().x)
+    board.height = math.abs(rock_left_upper.getPosition().z - rock_left_bottom.getPosition().z)
+    print("Board width: ", board.width)
+    print("Board height: ", board.height)
+
+    print("Cell size -- x: ", cell_size.x, "; z: ", cell_size.z)
+    GRID_NUM_CELLS.x = math.floor(board.width/cell_size.x)
+    GRID_NUM_CELLS.z = math.floor(board.height/cell_size.z)
+
+    print("num cells -- x: ", GRID_NUM_CELLS.x, "; z: ", GRID_NUM_CELLS.z)
+    -- print(dwarf_obj.getBounds())
+    Turns.enable = true
+    zone = spawnObject( {type='ScriptingTrigger'} )
+
+    tiles = {}
+    for i=1, GRID_NUM_CELLS.x, 1 do
+      for j=1, GRID_NUM_CELLS.z, 1 do
+        tiles[i * GRID_NUM_CELLS.x + j] = spawnObject({
+          type = 'Tileset_Floor',
+          position = getPosFromGridCell({x = i, y = 1, z = j}),
+          scale = { 1.2, 1.2, 1.2},
+        })
+      end
+    end
+
+    for i=1, GRID_NUM_CELLS.x, 1 do
+      for j=1, GRID_NUM_CELLS.z, 1 do
+          Wait.time(function()
+            insertTileOnGRID(tiles[i * GRID_NUM_CELLS.x + j],
+                            { x = i, y = 1, z = j })
+          end,
+          1)
+      end
+    end
+    gob = spawnObject( {type='rpg_GOBLIN'} )
+    Wait.time(function()
+      insertObjOnGRID(gob, { x = 1, y = 3, z = 1})
+    end,
+    2)
+end
+
+--[[ The onUpdate event is called once per frame. --]]
+function onUpdate()
+    --[[ print('onUpdate loop!') --]]
+end
